@@ -1,4 +1,4 @@
-package org.example.repository;
+package org.example.entity;
 
 import lombok.Getter;
 

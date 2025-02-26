@@ -1,17 +1,24 @@
 package org.example;
 
 import lombok.RequiredArgsConstructor;
+import org.example.entity.Items;
 import org.example.service.Customer;
 import org.example.service.Manager;
 
-import java.util.Optional;
 import java.util.Scanner;
 
 @RequiredArgsConstructor
 public class MenuLauncher {
+    private static final int INVALID_INPUT = -1;
+    private static final int MIN_RATING = 0;
+    private static final int MAX_RATING = 5;
+    private static final int MIN_ITEM_ID = 1;
+
+
     private final Manager manager;
     private final Customer customer;
-    private final Scanner scanner = new Scanner(System.in);
+    private final Scanner scanner;
+    private final ItemFactory itemFactory;
     private boolean programRunning = true;
 
 
@@ -25,10 +32,7 @@ public class MenuLauncher {
                     2.Customer Login
                     3.Exit""");
 
-            Optional<Integer> optionalInput = Optional.of(Integer.valueOf(scanner.nextLine()));
-            int input = optionalInput.orElse(-1);
-
-            switch (input) {
+            switch (getUserInput()) {
                 case 1 -> showAdminMenu();
                 case 2 -> showCustomerMenu();
                 case 3 -> exitProgram();
@@ -50,23 +54,19 @@ public class MenuLauncher {
                     5.Return to MAIN menu
                     6.Exit""");
 
-            Optional<Integer> optionalInput = Optional.of(Integer.valueOf(scanner.nextLine()));
-            int input = optionalInput.orElse(-1);
-
-            switch (input) {
+            switch (getUserInput()) {
                 case 1 -> {
-                    manager.addNewItem();
-                    manager.showItems();
+                    Items item = itemFactory.createItem();
+                    manager.addNewItem(item);
                 }
                 case 2 -> {
-                    manager.showItems();
-                    int chosenItemID = getChosenItemID();
+                    int chosenItemID = getValidChosenItemID(manager.getItemRepository().getAll().size());
                     manager.removeFromItemsList(chosenItemID);
                 }
                 case 3 -> {
-                    manager.showItems();
-                    int chosenItemID = getChosenItemID();
-                    manager.updateItem(chosenItemID);
+                    int chosenItemID = getValidChosenItemID(manager.getItemRepository().getAll().size());
+                    Items item = itemFactory.createItem();
+                    manager.updateItem(chosenItemID, item);
                 }
                 case 4 -> manager.showItems();
                 case 5 -> showMainMenu();
@@ -74,11 +74,6 @@ public class MenuLauncher {
                 default -> System.out.println("Incorrect input number");
             }
         }
-    }
-
-    private int getChosenItemID() {
-        System.out.println("Please, choose the id of item");
-        return Integer.parseInt(scanner.nextLine());
     }
 
     private void showCustomerMenu() {
@@ -91,49 +86,105 @@ public class MenuLauncher {
                     3.Cancel item
                     4.Make the order
                     5.Return to MAIN menu
-                    6.Exit""");
+                    6.Rate a product
+                    7.Exit""");
 
-            Optional<Integer> optionalInput = Optional.of(Integer.valueOf(scanner.nextLine()));
-            int input = optionalInput.orElse(-1);
-
-            switch (input) {
-                case 1 -> showAndAddToShoppingCart();
+            switch (getUserInput()) {
+                case 1 -> addToShoppingCart();
                 case 2 -> customer.showShoppingCart();
                 case 3 -> showAndCancelItem();
                 case 4 -> customer.confirmOrder();
                 case 5 -> showMainMenu();
-                case 6 -> exitProgram();
+                case 6 -> rateProduct();
+                case 7 -> exitProgram();
                 default -> System.out.println("Incorrect input number");
             }
         }
     }
 
-    private void showAndAddToShoppingCart() {
-        if (manager.getItemsList().isEmpty()) {
+    private void rateProduct() {
+        int chosenItemID = getValidChosenItemID(manager.getItemRepository().getAll().size());
+        double rating = INVALID_INPUT;
+        while (rating == INVALID_INPUT) {
+            System.out.println("Enter rating (" + MIN_RATING + "-" + MAX_RATING + "): ");
+            try {
+                rating = Double.parseDouble(scanner.nextLine().trim());
+                if (rating < MIN_RATING || rating > MAX_RATING) {
+                    System.out.println("Rating must be between " + MIN_RATING + " and " + MAX_RATING);
+                    rating = INVALID_INPUT;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid rating input. Please enter a number.");
+                rating = INVALID_INPUT;
+            }
+            customer.rateItem(chosenItemID, rating);
+        }
+    }
+
+    private void addToShoppingCart() {
+        if (manager.getItemRepository().getAll().isEmpty()) {
             System.out.println("Sorry, no items in the shop");
             return;
         }
         System.out.println("Choose id of one item to add to shopping cart");
-        manager.showItems();
-        int chosenItemID = getChosenItemID();
-        System.out.println("Please, enter quantity of this item: ");
-        String bookingDetails = scanner.nextLine().trim();
-        customer.addToShoppingCart(chosenItemID, bookingDetails);
+        int chosenItemID = getValidChosenItemID(manager.getItemRepository().getAll().size());
+        int quantity = getUserQuantity();
+        customer.addToShoppingCart(chosenItemID, quantity);
     }
 
     private void showAndCancelItem() {
-        if (customer.getShoppingCart().isEmpty()) {
+        if (customer.getShoppingCart().getAll().isEmpty()) {
             System.out.println("Sorry, your Shopping Cart is Empty ");
             return;
         }
         System.out.println("Choose the number of space, that you would like to cancel. ");
         customer.showShoppingCart();
-        int chosenItemID = getChosenItemID();
+        int chosenItemID = getValidChosenItemID(customer.getShoppingCart().getAll().size());
         customer.cancelItem(chosenItemID);
     }
 
     private void exitProgram() {
         System.out.println("Bye, have a nice day!");
         programRunning = false;
+    }
+
+    private int getUserInput() {
+        int input = INVALID_INPUT;
+        while (input == INVALID_INPUT) {
+            try {
+                input = Integer.parseInt(scanner.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                input = INVALID_INPUT;
+            }
+        }
+        return input;
+    }
+
+    private int getUserQuantity() {
+        int quantity = INVALID_INPUT;
+        while (quantity == INVALID_INPUT) {
+            System.out.println("Please, enter the quantity (must be > 0):");
+            quantity = getUserInput();
+            if (quantity <= 0) {
+                System.out.println("Quantity must be greater than 0.");
+                quantity = INVALID_INPUT;
+            }
+        }
+        return quantity;
+    }
+
+    private int getValidChosenItemID(int size) {
+        manager.showItems();
+        int chosenItemID = INVALID_INPUT;
+        while (chosenItemID == INVALID_INPUT) {
+            System.out.println("Please, choose the id of item");
+            chosenItemID = getUserInput();
+            if (chosenItemID < MIN_ITEM_ID || chosenItemID > size) {
+                System.out.println("Incorrect number. Please enter a valid item ID.");
+                chosenItemID = INVALID_INPUT;
+            }
+        }
+        return chosenItemID;
     }
 }
