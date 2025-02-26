@@ -9,10 +9,7 @@ import java.util.Scanner;
 
 @RequiredArgsConstructor
 public class MenuLauncher {
-    private static final int INVALID_INPUT = -1;
-    private static final int MIN_RATING = 0;
-    private static final int MAX_RATING = 5;
-    private static final int MIN_ITEM_ID = 1;
+    private final int INVALID_INPUT = -1;
 
 
     private final Manager manager;
@@ -106,6 +103,8 @@ public class MenuLauncher {
         int chosenItemID = getValidChosenItemID(manager.getItemRepository().getAll().size());
         double rating = INVALID_INPUT;
         while (rating == INVALID_INPUT) {
+            final int MIN_RATING = 0;
+            final int MAX_RATING = 5;
             System.out.println("Enter rating (" + MIN_RATING + "-" + MAX_RATING + "): ");
             try {
                 rating = Double.parseDouble(scanner.nextLine().trim());
@@ -180,6 +179,7 @@ public class MenuLauncher {
         while (chosenItemID == INVALID_INPUT) {
             System.out.println("Please, choose the id of item");
             chosenItemID = getUserInput();
+            final int MIN_ITEM_ID = 1;
             if (chosenItemID < MIN_ITEM_ID || chosenItemID > size) {
                 System.out.println("Incorrect number. Please enter a valid item ID.");
                 chosenItemID = INVALID_INPUT;
