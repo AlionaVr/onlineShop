@@ -5,7 +5,7 @@ import org.example.entity.ShoppingCart;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ShoppingCartRepo implements Repository<ShoppingCart> {
+public class ShoppingCartRepo implements ClearableRepository<ShoppingCart> {
 
     private final List<ShoppingCart> shoppingCart = new ArrayList<>();
 

@@ -4,14 +4,14 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Items;
 import org.example.entity.ShoppingCart;
-import org.example.repository.ItemRepository;
-import org.example.repository.ShoppingCartRepo;
+import org.example.repository.ClearableRepository;
+import org.example.repository.Repository;
 
 @RequiredArgsConstructor
 @Getter
 public class Customer {
-    private final ItemRepository itemRepository;
-    private final ShoppingCartRepo shoppingCart;
+    private final Repository<Items> itemRepository;
+    private final ClearableRepository<ShoppingCart> shoppingCart;
 
     public void addToShoppingCart(int itemId, int quantity) {
         Items selectedItem = itemRepository.getAll().get(itemId - 1);

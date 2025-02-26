@@ -3,7 +3,7 @@ package org.example.service;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Items;
-import org.example.repository.ItemRepository;
+import org.example.repository.Repository;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 public class Manager {
 
-    private final ItemRepository itemRepository;
+    private final Repository<Items> itemRepository;
 
     public void addNewItem(Items item) {
         itemRepository.add(item);
